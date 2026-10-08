@@ -1,5 +1,5 @@
-# Data — already downloaded, untracked to keep repo light
-data/
+# Data at repo root only — not src/data/
+/data/
 
 # Python
 __pycache__/
