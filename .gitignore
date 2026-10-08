@@ -1,0 +1,32 @@
+# Data — already downloaded, untracked to keep repo light
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs / temp
+*.log
+*.tmp
+*.cache
+
+# Jupyter
+.ipynb_checkpoints/
