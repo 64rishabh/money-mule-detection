@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Money Muling Dashboard</title>
+<style>:root{--bg:#0d1117;--fg:#c9d1d9;--accent:#ff7b72;--card:#161b22;--border:#30363d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;display:grid;grid-template-columns:260px 1fr 320px;grid-template-rows:48px 1fr 220px;gap:12px;height:100vh;padding:12px}
+header{grid-column:1/-1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:12px}
+h1{font-size:1.1rem;color:#f0f6fc}header button{background:var(--accent);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600}
+.left{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;overflow:auto}
+.left h2{font-size:.9rem;margin-bottom:10px;color:#f0f6fc;border-bottom:1px solid var(--border);padding-bottom:6px}
+.account{padding:8px;background:#0d1117;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer}
+.account:hover{border-color:var(--accent)}
+.account b{color:#f0f6fc;font-size:.95rem}.account .meta{font-size:.78rem;color:#8b949e}.high{color:#ff7b72;font-weight:700}.med{color:#d29922}.low{color:#3fb950}
+.center{background:var(--card);border:1px solid var(--border);border-radius:10px;position:relative;overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+.center .toolbar{position:absolute;top:10px;left:10px;background:#0d1117aa;border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:.8rem;color:#ccc}
+.right{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;overflow:auto}
+.right h2{font-size:.9rem;margin-bottom:10px;color:#f0f6fc;border-bottom:1px solid var(--border);padding-bottom:6px}
+.row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border);font-size:.82rem}
+.row b{color:#f0f6fc}
+@media(max-width:1200px){body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto}}
+</style></head>
+<body>
+<header><h1>Money-Muling Detection — Transaction Network</h1><button onclick="alert('Filter: highlight suspicious edges + high-risk accounts')">Filter Suspicious</button><button onclick="location.reload()">Reload</button></header>
+
+<section class="left" aria-label="Accounts">
+<h2>Account Risk (Sample)</h2>
+<div class="account" onclick="showAcct('A592')">
+<b>A592</b> <span class="meta">77 tx · 18 suspicious</span><br><span class="high">HIGH — 91%</span>
+</div>
+<div class="account" onclick="showAcct('B102')">
+<b>B102</b> <span class="meta">35 tx · 4 suspicious</span><br><span class="med">MEDIUM — 34%</span>
+</div>
+<div class="account" onclick="showAcct('C201')">
+<b>C201</b> <span class="meta">12 tx · 0 suspicious</span><br><span class="low">LOW — 0%</span>
+</div>
+<h2 style="margin-top:10px">Money Flow (Mule)</h2>
+<div style="font-size:.82rem;color:#8b949e">A → M ($50K) · B → M ($30K) · C → M ($20K) · M → X ($45K) · M → Y ($40K)</div>
+</section>
+
+<section class="center" aria-label="Network Graph">
+<canvas id="net"></canvas>
+<div class="toolbar">Zoom/Pan: mouse drag · Click node/edge to inspect · Red = suspicious</div>
+</section>
+
+<section class="right" aria-label="Transaction Details">
+<h2>Transaction T1842</h2>
+<div class="row"><b>Sender</b><span>A102</span></div>
+<div class="row"><b>Receiver</b><span>A592</span></div>
+<div class="row"><b>Amount</b><span>₹20,000</span></div>
+<div class="row"><b>Timestamp</b><span>14:32</span></div>
+<div class="row"><b>Risk Score</b><span class="high">87%</span></div>
+<div class="row"><b>Prediction</b><span>⚠ Suspicious</span></div>
+<div style="margin-top:8px;padding:8px;background:#0d1117;border:1px solid var(--border);border-radius:8px;font-size:.85rem;color:#ccc">
+<b>Why suspicious:</b> High amount + unknown sender pattern + rapid outflow to A592 (mule account).
+</div>
+</section>
+
+<script>
+const c=document.getElementById('net'),x=c.getContext('2d');let w,h,keys={},drag={},nodes=[{id:'A',x:80,y:120,r:14,c:'#58a6ff'},{id:'B',x:220,y:70,r:14,c:'#58a6ff'},{id:'C',x:220,y:180,r:14,c:'#58a6ff'},{id:'M',x:320,y:120,r:22,c:'#ff7b72'},{id:'D',x:450,y:120,r:14,c:'#58a6ff'},{id:'X',x:420,y:60,r:12,c:'#ff7b72'},{id:'Y',x:420,y:180,r:12,c:'#ff7b72'}],edges=[{a:'A',b:'M',w:3,s:1},{a:'B',b:'M',w:2,s:0},{a:'C',b:'M',w:2,s:0},{a:'M',b:'D',w:3,s:1},{a:'M',b:'X',w:4,s:1},{a:'M',b:'Y',w:2,s:0}];
+function resize(){w=c.width= c.parentElement.clientWidth; h=c.height=c.parentElement.clientHeight; draw();}
+function draw(){x.clearRect(0,0,w,h); edges.forEach(e=>{const n1=nodes.find(n=>n.id===e.a),n2=nodes.find(n=>n.id===e.b); if(!n1||!n2)return; x.beginPath(); x.moveTo(n1.x,n1.y); x.lineTo(n2.x,n2.y); x.strokeStyle=e.s? '#ff7b72':'#8b949e'; x.lineWidth=e.w*1.5; x.stroke();}); nodes.forEach(n=>{x.beginPath(); x.arc(n.x,n.y,n.r,0,Math.PI*2); x.fillStyle=n.c; x.fill(); x.fillStyle='#fff'; x.font='11px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(n.id,n.x,n.y);});}
+function showAcct(id){document.querySelector('.right h2').textContent='Account '+id; document.querySelector('.right').innerHTML='<h2>Account '+id+'</h2><div class="row"><b>Total</b><span>77</span></div><div class="row"><b>Suspicious</b><span>18</span></div><div class="row"><b>Risk</b><span class="high">91% HIGH</span></div>';}
+window.addEventListener('resize',resize); resize();
+</script>
+</body></html>
